@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -27,6 +26,7 @@ import org.flowable.dmn.converter.child.InputEntryParser;
 import org.flowable.dmn.converter.child.InputExpressionParser;
 import org.flowable.dmn.converter.child.OutputClauseParser;
 import org.flowable.dmn.converter.child.OutputEntryParser;
+import org.flowable.dmn.converter.child.OutputValuesParser;
 import org.flowable.dmn.model.DecisionTable;
 import org.flowable.dmn.model.DmnElement;
 import org.flowable.dmn.model.DmnExtensionAttribute;
@@ -48,6 +48,7 @@ public class DmnXMLUtil implements DmnXMLConstants {
         addGenericParser(new InputEntryParser());
         addGenericParser(new OutputEntryParser());
         addGenericParser(new InputExpressionParser());
+        addGenericParser(new OutputValuesParser());
     }
 
     private static void addGenericParser(BaseChildElementParser parser) {
@@ -55,7 +56,7 @@ public class DmnXMLUtil implements DmnXMLConstants {
     }
 
     public static void addXMLLocation(DmnElement element, XMLStreamReader xtr) {
-        Location location = xtr.getLocation();
+        // Location location = xtr.getLocation();
         // element.setXmlRowNumber(location.getLineNumber());
         // element.setXmlColumnNumber(location.getColumnNumber());
     }
@@ -68,7 +69,7 @@ public class DmnXMLUtil implements DmnXMLConstants {
     public static void parseChildElements(String elementName, DmnElement parentElement, XMLStreamReader xtr,
             Map<String, BaseChildElementParser> childParsers, DecisionTable decisionTable) throws Exception {
 
-        Map<String, BaseChildElementParser> localParserMap = new HashMap<String, BaseChildElementParser>(genericChildParserMap);
+        Map<String, BaseChildElementParser> localParserMap = new HashMap<>(genericChildParserMap);
         if (childParsers != null) {
             localParserMap.putAll(childParsers);
         }
@@ -184,7 +185,7 @@ public class DmnXMLUtil implements DmnXMLConstants {
             }
 
             if (namespaceMap == null) {
-                namespaceMap = new HashMap<String, String>();
+                namespaceMap = new HashMap<>();
             }
 
             for (List<DmnExtensionElement> extensionElements : dmnElement.getExtensionElements().values()) {

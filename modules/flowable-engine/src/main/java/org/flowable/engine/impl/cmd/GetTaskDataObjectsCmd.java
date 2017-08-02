@@ -13,6 +13,9 @@
 
 package org.flowable.engine.impl.cmd;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,9 +38,6 @@ import org.flowable.engine.impl.persistence.entity.VariableInstance;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 import org.flowable.engine.runtime.DataObject;
 import org.flowable.engine.task.Task;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class GetTaskDataObjectsCmd implements Command<Map<String, DataObject>>, Serializable {
 
@@ -82,7 +82,6 @@ public class GetTaskDataObjectsCmd implements Command<Map<String, DataObject>>, 
             dataObjects = new HashMap<>(variables.size());
 
             for (Entry<String, VariableInstance> entry : variables.entrySet()) {
-                String variableName = entry.getKey();
                 VariableInstance variableEntity = entry.getValue();
 
                 String localizedName = null;
@@ -129,7 +128,9 @@ public class GetTaskDataObjectsCmd implements Command<Map<String, DataObject>>, 
                 }
 
                 if (foundDataObject != null) {
-                    dataObjects.put(variableEntity.getName(), new DataObjectImpl(variableEntity.getName(), variableEntity.getValue(),
+                    dataObjects.put(
+                            variableEntity.getName(), new DataObjectImpl(variableEntity.getId(), variableEntity.getProcessInstanceId(),
+                                    variableEntity.getExecutionId(), variableEntity.getName(), variableEntity.getValue(),
                             foundDataObject.getDocumentation(), foundDataObject.getType(), localizedName, localizedDescription, foundDataObject.getId()));
                 }
             }

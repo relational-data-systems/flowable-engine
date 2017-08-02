@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.interceptor.CommandExecutor;
@@ -193,7 +192,7 @@ public class JobQueryImpl extends AbstractQuery<JobQuery, Job> implements JobQue
 
     public JobQuery jobTenantId(String tenantId) {
         if (tenantId == null) {
-            throw new FlowableIllegalArgumentException("job is null");
+            throw new FlowableIllegalArgumentException("Provided tenant id is null");
         }
         this.tenantId = tenantId;
         return this;
@@ -201,7 +200,7 @@ public class JobQueryImpl extends AbstractQuery<JobQuery, Job> implements JobQue
 
     public JobQuery jobTenantIdLike(String tenantIdLike) {
         if (tenantIdLike == null) {
-            throw new FlowableIllegalArgumentException("job is null");
+            throw new FlowableIllegalArgumentException("Provided tenant id is null");
         }
         this.tenantIdLike = tenantIdLike;
         return this;
@@ -260,9 +259,9 @@ public class JobQueryImpl extends AbstractQuery<JobQuery, Job> implements JobQue
         return commandContext.getJobEntityManager().findJobCountByQueryCriteria(this);
     }
 
-    public List<Job> executeList(CommandContext commandContext, Page page) {
+    public List<Job> executeList(CommandContext commandContext) {
         checkQueryOk();
-        return commandContext.getJobEntityManager().findJobsByQueryCriteria(this, page);
+        return commandContext.getJobEntityManager().findJobsByQueryCriteria(this);
     }
 
     // getters //////////////////////////////////////////

@@ -34,6 +34,7 @@ import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.dmn.converter.util.DmnXMLUtil;
+import org.flowable.dmn.model.BuiltinAggregator;
 import org.flowable.dmn.model.Decision;
 import org.flowable.dmn.model.DecisionRule;
 import org.flowable.dmn.model.DecisionTable;
@@ -72,6 +73,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
 
     static {
         addConverter(new InputClauseXMLConverter());
+        addConverter(new OutputClauseXMLConverter());
         addConverter(new DecisionRuleXMLConverter());
     }
 
@@ -171,6 +173,11 @@ public class DmnXMLConverter implements DmnXMLConstants {
         DmnElement parentElement = null;
         DecisionTable currentDecisionTable = null;
 
+        // reset element counters
+        convertersToDmnMap.get(ELEMENT_RULE).initializeElementCounter();
+        convertersToDmnMap.get(ELEMENT_INPUT_CLAUSE).initializeElementCounter();
+        convertersToDmnMap.get(ELEMENT_OUTPUT_CLAUSE).initializeElementCounter();
+
         try {
             while (xtr.hasNext()) {
                 try {
@@ -200,21 +207,17 @@ public class DmnXMLConverter implements DmnXMLConstants {
                     currentDecisionTable.setId(xtr.getAttributeValue(null, ATTRIBUTE_ID));
 
                     if (xtr.getAttributeValue(null, ATTRIBUTE_HIT_POLICY) != null) {
-                        currentDecisionTable.setHitPolicy(HitPolicy.valueOf(xtr.getAttributeValue(null, ATTRIBUTE_HIT_POLICY)));
+                        currentDecisionTable.setHitPolicy(HitPolicy.get(xtr.getAttributeValue(null, ATTRIBUTE_HIT_POLICY)));
                     } else {
                         currentDecisionTable.setHitPolicy(HitPolicy.FIRST);
                     }
 
+                    if (xtr.getAttributeValue(null, ATTRIBUTE_AGGREGATION) != null) {
+                        currentDecisionTable.setAggregation(BuiltinAggregator.get(xtr.getAttributeValue(null, ATTRIBUTE_AGGREGATION)));
+                    }
+
                     model.getDecisions().get(model.getDecisions().size() - 1).setExpression(currentDecisionTable);
                     parentElement = currentDecisionTable;
-                } else if (ELEMENT_OUTPUT_CLAUSE.equals(xtr.getLocalName())) {
-                    OutputClause outputClause = new OutputClause();
-                    currentDecisionTable.addOutput(outputClause);
-                    outputClause.setId(xtr.getAttributeValue(null, ATTRIBUTE_ID));
-                    outputClause.setLabel(xtr.getAttributeValue(null, ATTRIBUTE_LABEL));
-                    outputClause.setName(xtr.getAttributeValue(null, ATTRIBUTE_NAME));
-                    outputClause.setTypeRef(xtr.getAttributeValue(null, ATTRIBUTE_TYPE_REF));
-                    parentElement = outputClause;
                 } else if (ELEMENT_DESCRIPTION.equals(xtr.getLocalName())) {
                     parentElement.setDescription(xtr.getElementText());
                 } else if (ELEMENT_EXTENSIONS.equals(xtr.getLocalName())) {
@@ -304,7 +307,11 @@ public class DmnXMLConverter implements DmnXMLConstants {
                 xtw.writeAttribute(ATTRIBUTE_ID, decisionTable.getId());
 
                 if (decisionTable.getHitPolicy() != null) {
-                    xtw.writeAttribute(ATTRIBUTE_HIT_POLICY, decisionTable.getHitPolicy().toString());
+                    xtw.writeAttribute(ATTRIBUTE_HIT_POLICY, decisionTable.getHitPolicy().getValue());
+                }
+
+                if (decisionTable.getAggregation() != null) {
+                    xtw.writeAttribute(ATTRIBUTE_AGGREGATION, decisionTable.getAggregation().toString());
                 }
 
                 DmnXMLUtil.writeElementDescription(decisionTable, xtw);
@@ -339,6 +346,14 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         xtw.writeEndElement();
                     }
 
+                    if (clause.getInputValues() != null && StringUtils.isNotEmpty(clause.getInputValues().getText())) {
+                        xtw.writeStartElement(ELEMENT_INPUT_VALUES);
+                        xtw.writeStartElement(ELEMENT_TEXT);
+                        xtw.writeCharacters(clause.getInputValues().getText());
+                        xtw.writeEndElement();
+                        xtw.writeEndElement();
+                    }
+
                     xtw.writeEndElement();
                 }
 
@@ -355,6 +370,14 @@ public class DmnXMLConverter implements DmnXMLConstants {
                     }
                     if (StringUtils.isNotEmpty(clause.getTypeRef())) {
                         xtw.writeAttribute(ATTRIBUTE_TYPE_REF, clause.getTypeRef());
+                    }
+
+                    if (clause.getOutputValues() != null && StringUtils.isNotEmpty(clause.getOutputValues().getText())) {
+                        xtw.writeStartElement(ELEMENT_OUTPUT_VALUES);
+                        xtw.writeStartElement(ELEMENT_TEXT);
+                        xtw.writeCharacters(clause.getOutputValues().getText());
+                        xtw.writeEndElement();
+                        xtw.writeEndElement();
                     }
 
                     DmnXMLUtil.writeElementDescription(clause, xtw);
@@ -377,7 +400,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         xtw.writeAttribute(ATTRIBUTE_ID, container.getInputEntry().getId());
 
                         xtw.writeStartElement(ELEMENT_TEXT);
-                        xtw.writeCharacters(container.getInputEntry().getText());
+                        xtw.writeCData(container.getInputEntry().getText());
                         xtw.writeEndElement();
 
                         xtw.writeEndElement();
@@ -388,7 +411,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         xtw.writeAttribute(ATTRIBUTE_ID, container.getOutputEntry().getId());
 
                         xtw.writeStartElement(ELEMENT_TEXT);
-                        xtw.writeCharacters(container.getOutputEntry().getText());
+                        xtw.writeCData(container.getOutputEntry().getText());
                         xtw.writeEndElement();
 
                         xtw.writeEndElement();

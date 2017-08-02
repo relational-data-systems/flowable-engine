@@ -28,6 +28,7 @@ import java.util.Set;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Execution;
@@ -52,8 +53,8 @@ public class ProcessInstanceQueryTest extends PluggableFlowableTestCase {
     private static final String PROCESS_DEFINITION_KEY_2 = "oneTaskProcess2";
     private static final String PROCESS_DEFINITION_NAME = "oneTaskProcessName";
     private static final String PROCESS_DEFINITION_NAME_2 = "oneTaskProcess2Name";
-    private static final String PROCESS_DEFINITION_CATEGORY = "org.flowable.enginge.test.api.runtime.Category";
-    private static final String PROCESS_DEFINITION_CATEGORY_2 = "org.flowable.enginge.test.api.runtime.2Category";
+    private static final String PROCESS_DEFINITION_CATEGORY = "org.flowable.engine.test.api.runtime.Category";
+    private static final String PROCESS_DEFINITION_CATEGORY_2 = "org.flowable.engine.test.api.runtime.2Category";
 
     private org.flowable.engine.repository.Deployment deployment;
     private List<String> processInstanceIds;
@@ -74,9 +75,7 @@ public class ProcessInstanceQueryTest extends PluggableFlowableTestCase {
     }
 
     protected void tearDown() throws Exception {
-        for (org.flowable.engine.repository.Deployment deployment : repositoryService.createDeploymentQuery().list()) {
-            repositoryService.deleteDeployment(deployment.getId(), true);
-        }
+        deleteDeployments();
         super.tearDown();
     }
 
@@ -236,7 +235,7 @@ public class ProcessInstanceQueryTest extends PluggableFlowableTestCase {
         assertEquals(1, runtimeService.createProcessInstanceQuery().processInstanceNameLikeIgnoreCase("new%").list().size());
         assertNull(runtimeService.createProcessInstanceQuery().or().processInstanceNameLikeIgnoreCase("%nope").processDefinitionId("undefined").endOr().singleResult());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(2, historyService.createHistoricProcessInstanceQuery().or().processInstanceNameLikeIgnoreCase("%name%").processDefinitionId("undefined").endOr().list().size());
             assertEquals(2, historyService.createHistoricProcessInstanceQuery().processInstanceNameLikeIgnoreCase("%name%").list().size());

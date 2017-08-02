@@ -97,8 +97,8 @@ var DECISION_TABLE_TOOLBAR = {
 
 /** Custom controller for the save dialog */
 angular.module('flowableModeler')
-    .controller('SaveDecisionTableCtrl', [ '$rootScope', '$scope', '$http', '$route', '$location', '$translate', 'DecisionTableService',
-        function ($rootScope, $scope, $http, $route, $location, $translate, DecisionTableService) {
+    .controller('SaveDecisionTableCtrl', [ '$rootScope', '$scope', '$http', '$route', '$location', '$translate', 'DecisionTableService', 'hotRegisterer',
+        function ($rootScope, $scope, $http, $route, $location, $translate, DecisionTableService, hotRegisterer) {
 
             var description = '';
             if ($rootScope.currentDecisionTableModel.description) {
@@ -153,15 +153,20 @@ angular.module('flowableModeler')
                 var data = {
                     reusable: $scope.saveDialog.reusable,
                     newVersion: $scope.saveDialog.newVersion,
-                    comment: $scope.saveDialog.comment
+                    comment: $scope.saveDialog.comment,
+                    lastUpdated: $rootScope.currentDecisionTableModel.lastUpdated //added by Simon for optimistic lock
                 };
 
-                var saveCallback = function() {
+                $rootScope.currentDecisionTableRules = $scope.model.rulesData;
+
+                var saveCallback = function(response) {
                     $scope.$hide();
                     
                     $rootScope.currentDecisionTableModel.name = $scope.saveDialog.name;
                     $rootScope.currentDecisionTableModel.key = $scope.saveDialog.key;
                     $rootScope.currentDecisionTableModel.description = $scope.saveDialog.description;
+                    
+                    $rootScope.currentDecisionTableModel.lastUpdated = response.lastUpdated; //added by Simon for optimistic lock
                     
                     $rootScope.addAlertPromise($translate('DECISION-TABLE-EDITOR.ALERT.SAVE-CONFIRM', {name: $scope.saveDialog.name}), 'info');
                     
@@ -175,7 +180,18 @@ angular.module('flowableModeler')
                 var errorCallback = function(errorMessage) {
                 	$scope.status.loading = false;
                     $scope.saveDialog.errorMessage = errorMessage.message;
+                  
+                  //Added by Simon for optismic locking
+                  if(errorMessage && errorMessage.indexOf && errorMessage.indexOf('ConflictingRequestException'>0)) {
+                    $scope.saveDialog.errorMessage = "Decision table has been updated by someone else, you can save a new version!"
+                  }
                 };
+
+                // deselect cells before thumbnail generations
+                var hotDecisionTableEditorInstance = hotRegisterer.getInstance('decision-table-editor');
+                if (hotDecisionTableEditorInstance) {
+                    hotDecisionTableEditorInstance.deselectCell();
+                }
 
                 DecisionTableService.saveDecisionTable(data, $scope.saveDialog.name, $scope.saveDialog.key, 
                 	$scope.saveDialog.description, saveCallback, errorCallback);

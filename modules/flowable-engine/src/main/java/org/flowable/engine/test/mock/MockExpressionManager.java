@@ -13,18 +13,17 @@
 
 package org.flowable.engine.test.mock;
 
-import javax.el.ArrayELResolver;
-import javax.el.BeanELResolver;
-import javax.el.CompositeELResolver;
-import javax.el.ELResolver;
-import javax.el.ListELResolver;
-import javax.el.MapELResolver;
-
+import org.flowable.engine.common.impl.javax.el.ArrayELResolver;
+import org.flowable.engine.common.impl.javax.el.BeanELResolver;
+import org.flowable.engine.common.impl.javax.el.CompositeELResolver;
+import org.flowable.engine.common.impl.javax.el.ELResolver;
+import org.flowable.engine.common.impl.javax.el.ListELResolver;
+import org.flowable.engine.common.impl.javax.el.MapELResolver;
 import org.flowable.engine.delegate.VariableScope;
-import org.flowable.engine.impl.el.ExpressionManager;
+import org.flowable.engine.impl.el.DefaultExpressionManager;
 import org.flowable.engine.impl.el.VariableScopeElResolver;
 
-public class MockExpressionManager extends ExpressionManager {
+public class MockExpressionManager extends DefaultExpressionManager {
 
     @Override
     protected ELResolver createElResolver(VariableScope variableScope) {

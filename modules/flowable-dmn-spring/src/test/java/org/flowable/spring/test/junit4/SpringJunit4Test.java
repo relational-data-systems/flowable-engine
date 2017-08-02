@@ -13,7 +13,6 @@
 package org.flowable.spring.test.junit4;
 
 import org.flowable.dmn.api.DmnRuleService;
-import org.flowable.dmn.api.RuleEngineExecutionResult;
 import org.flowable.dmn.engine.DmnEngine;
 import org.flowable.dmn.engine.test.DmnDeploymentAnnotation;
 import org.flowable.dmn.engine.test.FlowableDmnRule;
@@ -60,9 +59,9 @@ public class SpringJunit4Test {
     public void simpleDecisionTest() {
         Map<String, Object> inputVariables = new HashMap<>();
         inputVariables.put("input1", "testString");
-        RuleEngineExecutionResult executionResult = ruleService.executeDecisionByKey("decision1", inputVariables);
+        Map<String, Object> executionResult = ruleService.executeDecisionByKeySingleResult("decision1", inputVariables);
 
-        assertEquals("test1", executionResult.getResultVariables().get("output1"));
+        assertEquals("test1", executionResult.get("output1"));
         assertNotNull(flowableDmnSpringRule.getRepositoryService());
     }
 }

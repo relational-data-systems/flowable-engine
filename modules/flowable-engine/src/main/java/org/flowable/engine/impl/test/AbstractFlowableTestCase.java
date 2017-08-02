@@ -39,12 +39,15 @@ import org.flowable.engine.history.HistoricTaskInstance;
 import org.flowable.engine.impl.ProcessEngineImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.db.DbSqlSession;
+import org.flowable.engine.impl.history.DefaultHistoryManager;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.history.HistoryManager;
 import org.flowable.engine.impl.interceptor.Command;
 import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.interceptor.CommandExecutor;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.runtime.HistoryJob;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.junit.Assert;
 
@@ -108,9 +111,7 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
     @Override
     public void runBare() throws Throwable {
         initializeProcessEngine();
-        if (repositoryService == null) {
-            initializeServices();
-        }
+        initializeServices();
 
         try {
 
@@ -133,19 +134,45 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
             throw e;
 
         } finally {
-
-            if (deploymentIdFromDeploymentAnnotation != null) {
-                TestHelper.annotationDeploymentTearDown(processEngine, deploymentIdFromDeploymentAnnotation, getClass(), getName());
-                deploymentIdFromDeploymentAnnotation = null;
+            
+            boolean isAsyncHistoryEnabled = processEngineConfiguration.isAsyncHistoryEnabled();
+            
+            if (isAsyncHistoryEnabled) {
+                List<HistoryJob> jobs = managementService.createHistoryJobQuery().list();
+                for (HistoryJob job : jobs) {
+                    managementService.deleteHistoryJob(job.getId());
+                }
             }
-
-            for (String autoDeletedDeploymentId : deploymentIdsForAutoCleanup) {
-                repositoryService.deleteDeployment(autoDeletedDeploymentId, true);
+            
+            HistoryManager asyncHistoryManager = null;
+            try {
+                if (isAsyncHistoryEnabled) {
+                    processEngineConfiguration.setAsyncHistoryEnabled(false);
+                    asyncHistoryManager = processEngineConfiguration.getHistoryManager();
+                    processEngineConfiguration.setHistoryManager(new DefaultHistoryManager(processEngineConfiguration, processEngineConfiguration.getHistoryLevel()));
+                }
+    
+                if (deploymentIdFromDeploymentAnnotation != null) {
+                    TestHelper.annotationDeploymentTearDown(processEngine, deploymentIdFromDeploymentAnnotation, getClass(), getName());
+                    deploymentIdFromDeploymentAnnotation = null;
+                }
+    
+                for (String autoDeletedDeploymentId : deploymentIdsForAutoCleanup) {
+                    repositoryService.deleteDeployment(autoDeletedDeploymentId, true);
+                }
+                deploymentIdsForAutoCleanup.clear();
+    
+                assertAndEnsureCleanDb();
+                
+            } finally {
+            
+                if (isAsyncHistoryEnabled) {
+                    processEngineConfiguration.setAsyncHistoryEnabled(true);
+                    processEngineConfiguration.setHistoryManager(asyncHistoryManager);
+                }
+                
+                processEngineConfiguration.getClock().reset();
             }
-            deploymentIdsForAutoCleanup.clear();
-
-            assertAndEnsureCleanDb();
-            processEngineConfiguration.getClock().reset();
 
             // Can't do this in the teardown, as the teardown will be called as part of the super.runBare
             closeDownProcessEngine();
@@ -162,7 +189,7 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
                 assertNotNull("Historic process instance has no process definition id", historicProcessInstance.getProcessDefinitionId());
                 assertNotNull("Historic process instance has no process definition key", historicProcessInstance.getProcessDefinitionKey());
                 assertNotNull("Historic process instance has no process definition version", historicProcessInstance.getProcessDefinitionVersion());
-                assertNotNull("Historic process instance has no process definition key", historicProcessInstance.getDeploymentId());
+                assertNotNull("Historic process instance has no deployment id", historicProcessInstance.getDeploymentId());
                 assertNotNull("Historic process instance has no start activity id", historicProcessInstance.getStartActivityId());
                 assertNotNull("Historic process instance has no start time", historicProcessInstance.getStartTime());
                 assertNotNull("Historic process instance has no end time", historicProcessInstance.getEndTime());
@@ -172,6 +199,7 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
                 // tasks
                 List<HistoricTaskInstance> historicTaskInstances = historyService.createHistoricTaskInstanceQuery()
                         .processInstanceId(processInstanceId).list();
+                
                 if (historicTaskInstances != null && historicTaskInstances.size() > 0) {
                     for (HistoricTaskInstance historicTaskInstance : historicTaskInstances) {
                         assertEquals(processInstanceId, historicTaskInstance.getProcessInstanceId());
@@ -195,13 +223,13 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
                 if (historicActivityInstances != null && historicActivityInstances.size() > 0) {
                     for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
                         assertEquals(processInstanceId, historicActivityInstance.getProcessInstanceId());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no activity id", historicActivityInstance.getActivityId());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no activity type", historicActivityInstance.getActivityType());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no process definition id", historicActivityInstance.getProcessDefinitionId());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no process instance id", historicActivityInstance.getProcessInstanceId());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no execution id", historicActivityInstance.getExecutionId());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no start time", historicActivityInstance.getStartTime());
-                        assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no end time", historicActivityInstance.getEndTime());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no activity id", historicActivityInstance.getActivityId());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no activity type", historicActivityInstance.getActivityType());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no process definition id", historicActivityInstance.getProcessDefinitionId());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no process instance id", historicActivityInstance.getProcessInstanceId());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no execution id", historicActivityInstance.getExecutionId());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no start time", historicActivityInstance.getStartTime());
+                        assertNotNull("Historic activity instance " + historicActivityInstance.getId() + " / " + historicActivityInstance.getActivityId() + " has no end time", historicActivityInstance.getEndTime());
                     }
                 }
             }
@@ -274,7 +302,7 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
         }
 
         // Verify historical data if end times are correctly set
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
 
             // process instance
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
@@ -300,8 +328,8 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
             if (historicActivityInstances != null && historicActivityInstances.size() > 0) {
                 for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
                     assertEquals(processInstanceId, historicActivityInstance.getProcessInstanceId());
-                    assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no start time", historicActivityInstance.getStartTime());
-                    assertNotNull("Historic activity instance " + historicActivityInstance.getActivityId() + " has no end time", historicActivityInstance.getEndTime());
+                    assertNotNull(historicActivityInstance.getId() + " Historic activity instance '" + historicActivityInstance.getActivityId() +"' has no start time", historicActivityInstance.getStartTime());
+                    assertNotNull(historicActivityInstance.getId() + " Historic activity instance '" + historicActivityInstance.getActivityId() + "' has no end time", historicActivityInstance.getEndTime());
                 }
             }
         }
@@ -322,6 +350,14 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
     public void waitForJobExecutorToProcessAllJobsAndExecutableTimerJobs(long maxMillisToWait, long intervalMillis) {
         JobTestHelper.waitForJobExecutorToProcessAllJobsAndExecutableTimerJobs(processEngineConfiguration, managementService, maxMillisToWait, intervalMillis);
     }
+    
+    public void waitForJobExecutorToProcessAllHistoryJobs(long maxMillisToWait, long intervalMillis) {
+        HistoryTestHelper.waitForJobExecutorToProcessAllHistoryJobs(processEngineConfiguration, managementService, maxMillisToWait, intervalMillis);
+    }
+    
+    public void waitForHistoryJobExecutorToProcessAllJobs(long maxMillisToWait, long intervalMillis) {
+        HistoryTestHelper.waitForJobExecutorToProcessAllHistoryJobs(processEngineConfiguration, managementService, maxMillisToWait, intervalMillis);
+    }
 
     /**
      * Since the 'one task process' is used everywhere the actual process content doesn't matter, instead of copying around the BPMN 2.0 xml one could use this method which gives a {@link BpmnModel}
@@ -336,6 +372,7 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
 
         StartEvent startEvent = new StartEvent();
         startEvent.setId("start");
+        startEvent.setName("The start");
         process.addFlowElement(startEvent);
 
         UserTask userTask = new UserTask();
@@ -346,6 +383,7 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
 
         EndEvent endEvent = new EndEvent();
         endEvent.setId("theEnd");
+        endEvent.setName("The end");
         process.addFlowElement(endEvent);
 
         process.addFlowElement(new SequenceFlow("start", "theTask"));
@@ -417,6 +455,42 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
     //
     // HELPERS
     //
+    
+    protected void deleteDeployments() {
+        boolean isAsyncHistoryEnabled = processEngineConfiguration.isAsyncHistoryEnabled();
+        HistoryManager asyncHistoryManager = null;
+        if (isAsyncHistoryEnabled) {
+            processEngineConfiguration.setAsyncHistoryEnabled(false);
+            asyncHistoryManager = processEngineConfiguration.getHistoryManager();
+            processEngineConfiguration.setHistoryManager(new DefaultHistoryManager(processEngineConfiguration, processEngineConfiguration.getHistoryLevel()));
+        }
+        
+        for (org.flowable.engine.repository.Deployment deployment : repositoryService.createDeploymentQuery().list()) {
+            repositoryService.deleteDeployment(deployment.getId(), true);
+        }
+        
+        if (isAsyncHistoryEnabled) {
+            processEngineConfiguration.setAsyncHistoryEnabled(true);
+            processEngineConfiguration.setHistoryManager(asyncHistoryManager);
+        }
+    }
+    
+    protected void deleteDeployment(String deploymentId) {
+        boolean isAsyncHistoryEnabled = processEngineConfiguration.isAsyncHistoryEnabled();
+        HistoryManager asyncHistoryManager = null;
+        if (isAsyncHistoryEnabled) {
+            processEngineConfiguration.setAsyncHistoryEnabled(false);
+            asyncHistoryManager = processEngineConfiguration.getHistoryManager();
+            processEngineConfiguration.setHistoryManager(new DefaultHistoryManager(processEngineConfiguration, processEngineConfiguration.getHistoryLevel()));
+        }
+        
+        repositoryService.deleteDeployment(deploymentId, true);
+        
+        if (isAsyncHistoryEnabled) {
+            processEngineConfiguration.setAsyncHistoryEnabled(true);
+            processEngineConfiguration.setHistoryManager(asyncHistoryManager);
+        }
+    }
 
     protected void assertHistoricTasksDeleteReason(ProcessInstance processInstance, String expectedDeleteReason, String... taskNames) {
         if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
@@ -439,15 +513,15 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
     protected void assertHistoricActivitiesDeleteReason(ProcessInstance processInstance, String expectedDeleteReason, String... activityIds) {
         if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
             for (String activityId : activityIds) {
-                List<HistoricActivityInstance> historicActiviyInstances = historyService.createHistoricActivityInstanceQuery()
+                List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery()
                         .activityId(activityId).processInstanceId(processInstance.getId()).list();
-                assertTrue("Could not find historic activities", historicActiviyInstances.size() > 0);
-                for (HistoricActivityInstance historicActiviyInstance : historicActiviyInstances) {
-                    assertNotNull(historicActiviyInstance.getEndTime());
+                assertTrue("Could not find historic activities", historicActivityInstances.size() > 0);
+                for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
+                    assertNotNull(historicActivityInstance.getEndTime());
                     if (expectedDeleteReason == null) {
-                        assertNull(historicActiviyInstance.getDeleteReason());
+                        assertNull(historicActivityInstance.getDeleteReason());
                     } else {
-                        assertTrue(historicActiviyInstance.getDeleteReason().startsWith(expectedDeleteReason));
+                        assertTrue(historicActivityInstance.getDeleteReason().startsWith(expectedDeleteReason));
                     }
                 }
             }

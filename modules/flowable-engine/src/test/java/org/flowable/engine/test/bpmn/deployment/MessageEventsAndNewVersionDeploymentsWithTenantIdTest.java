@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.EventSubscription;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -90,7 +91,7 @@ public class MessageEventsAndNewVersionDeploymentsWithTenantIdTest extends Plugg
     /**
      * Verifying that the event subscriptions do get removed when removing a process instance.
      */
-    public void testBoundaryEventSubscrptionsDeletedOnProcessInstanceDelete() {
+    public void testBoundaryEventSubscriptionsDeletedOnProcessInstanceDelete() {
         String deploymentId1 = deployBoundaryMessageTestProcess();
         runtimeService.startProcessInstanceByKeyAndTenantId("messageTest", TENANT_ID);
         assertEquals("My Task", taskService.createTaskQuery().singleResult().getName());
@@ -397,7 +398,7 @@ public class MessageEventsAndNewVersionDeploymentsWithTenantIdTest extends Plugg
             runtimeService.startProcessInstanceByMessageAndTenantId("myMessage", TENANT_ID);
         }
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             assertEquals(9, historyService.createHistoricProcessInstanceQuery().count());
         }
         assertEquals(10, getAllEventSubscriptions().size()); // 1 for the start, 9 for boundary
@@ -452,9 +453,7 @@ public class MessageEventsAndNewVersionDeploymentsWithTenantIdTest extends Plugg
     }
 
     private void cleanup(String... deploymentIds) {
-        for (String deploymentId : deploymentIds) {
-            repositoryService.deleteDeployment(deploymentId, true);
-        }
+        deleteDeployments();
     }
 
     private List<String> getExecutionIdsForMessageEventSubscription(final String messageName) {

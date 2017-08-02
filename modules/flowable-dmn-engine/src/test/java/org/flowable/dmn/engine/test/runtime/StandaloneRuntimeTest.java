@@ -13,7 +13,6 @@
 package org.flowable.dmn.engine.test.runtime;
 
 import org.flowable.dmn.api.DmnRuleService;
-import org.flowable.dmn.api.RuleEngineExecutionResult;
 import org.flowable.dmn.engine.DmnEngine;
 import org.flowable.dmn.engine.test.DmnDeploymentAnnotation;
 import org.flowable.dmn.engine.test.FlowableDmnRule;
@@ -42,8 +41,8 @@ public class StandaloneRuntimeTest {
         inputVariables.put("inputVariable1", 2);
         inputVariables.put("inputVariable2", "test2");
 
-        RuleEngineExecutionResult result = dmnRuleService.executeDecisionByKey("decision1", inputVariables);
+        Map<String, Object> result = dmnRuleService.executeDecisionByKeySingleResult("decision1", inputVariables);
 
-        Assert.assertEquals("result2", result.getResultVariables().get("outputVariable1"));
+        Assert.assertEquals("result2", result.get("outputVariable1"));
     }
 }

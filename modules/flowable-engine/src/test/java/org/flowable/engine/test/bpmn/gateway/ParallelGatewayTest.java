@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.Task;
@@ -107,7 +108,7 @@ public class ParallelGatewayTest extends PluggableFlowableTestCase {
      * https://activiti.atlassian.net/browse/ACT-1222
      */
     @Deployment
-    public void testReceyclingExecutionWithCallActivity() {
+    public void testRecyclingExecutionWithCallActivity() {
         runtimeService.startProcessInstanceByKey("parent-process");
 
         // After process start we have two tasks, one from the parent and one
@@ -166,8 +167,9 @@ public class ParallelGatewayTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testHistoricActivityInstanceEndTimes() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
-            runtimeService.startProcessInstanceByKey("nestedForkJoin");
+        runtimeService.startProcessInstanceByKey("nestedForkJoin");
+        
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery().list();
             assertEquals(21, historicActivityInstances.size());
             for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {

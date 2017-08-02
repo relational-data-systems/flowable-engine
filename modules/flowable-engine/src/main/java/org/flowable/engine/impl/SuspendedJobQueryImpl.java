@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.interceptor.CommandExecutor;
@@ -189,7 +188,7 @@ public class SuspendedJobQueryImpl extends AbstractQuery<SuspendedJobQuery, Job>
 
     public SuspendedJobQueryImpl jobTenantId(String tenantId) {
         if (tenantId == null) {
-            throw new FlowableIllegalArgumentException("job is null");
+            throw new FlowableIllegalArgumentException("Provided tenant id is null");
         }
         this.tenantId = tenantId;
         return this;
@@ -197,7 +196,7 @@ public class SuspendedJobQueryImpl extends AbstractQuery<SuspendedJobQuery, Job>
 
     public SuspendedJobQueryImpl jobTenantIdLike(String tenantIdLike) {
         if (tenantIdLike == null) {
-            throw new FlowableIllegalArgumentException("job is null");
+            throw new FlowableIllegalArgumentException("Provided tenant id is null");
         }
         this.tenantIdLike = tenantIdLike;
         return this;
@@ -241,9 +240,9 @@ public class SuspendedJobQueryImpl extends AbstractQuery<SuspendedJobQuery, Job>
         return commandContext.getSuspendedJobEntityManager().findJobCountByQueryCriteria(this);
     }
 
-    public List<Job> executeList(CommandContext commandContext, Page page) {
+    public List<Job> executeList(CommandContext commandContext) {
         checkQueryOk();
-        return commandContext.getSuspendedJobEntityManager().findJobsByQueryCriteria(this, page);
+        return commandContext.getSuspendedJobEntityManager().findJobsByQueryCriteria(this);
     }
 
     // getters //////////////////////////////////////////

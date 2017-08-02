@@ -19,11 +19,13 @@ var FLOWABLE = FLOWABLE || {};
 
 FLOWABLE.CONFIG = {
 	'onPremise' : true,
-	'contextRoot' : '/flowable-modeler',
-	'webContextRoot' : '/flowable-modeler',
+	'contextRoot' : '/designer',
+	'webContextRoot' : '/designer',
+	'datesLocalization' : false,
 	'formType': 9, 
 	'deployUrls': [{
 	  "name": "localhost",
 	  "url": "http://localhost:8080/runtime/workflow/deploy"
-	}]
+	}],
+	'appTitle': 'RDS System Builder'
 };

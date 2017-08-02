@@ -24,14 +24,13 @@ import java.util.Map;
 
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.impl.cmd.GetIdentityLinksForTaskCmd;
 import org.flowable.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.persistence.entity.TaskEntity;
 import org.flowable.engine.impl.persistence.entity.VariableInstanceEntity;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.DelegationState;
-import org.flowable.engine.task.IdentityLink;
 import org.flowable.engine.task.IdentityLinkInfo;
 import org.flowable.engine.task.Task;
 import org.flowable.engine.task.TaskQuery;
@@ -566,7 +565,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(0, query.list().size());
         assertNull(query.singleResult());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(1, historyService.createHistoricTaskInstanceQuery().taskAssigneeIds(Arrays.asList("gonzo", "kermit")).count());
             assertEquals(0, historyService.createHistoricTaskInstanceQuery().taskAssigneeIds(Arrays.asList("kermit", "kermit2")).count());
@@ -581,7 +580,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(2, query.count());
         assertEquals(2, query.list().size());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(2, historyService.createHistoricTaskInstanceQuery().taskAssigneeIds(Arrays.asList("gonzo", "testAssignee")).count());
         }
@@ -600,7 +599,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(0, query.list().size());
         assertNull(query.singleResult());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(1, historyService.createHistoricTaskInstanceQuery().or().taskId("invalid").taskAssigneeIds(Arrays.asList("gonzo", "kermit")).count());
             assertEquals(0, historyService.createHistoricTaskInstanceQuery().or().taskId("invalid").taskAssigneeIds(Arrays.asList("kermit", "kermit2")).count());
@@ -615,7 +614,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(2, query.count());
         assertEquals(2, query.list().size());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(2, historyService.createHistoricTaskInstanceQuery().or().taskId("invalid").taskAssigneeIds(Arrays.asList("gonzo", "testAssignee")).count());
         }
@@ -642,7 +641,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
             for (Task task : allTasks) {
                 if (task.getExecutionId() == null) {
                     taskService.deleteTask(task.getId());
-                    if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+                    if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
                         historyService.deleteHistoricTaskInstance(task.getId());
                     }
                 }
@@ -669,7 +668,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
             for (Task task : allTasks) {
                 if (task.getExecutionId() == null) {
                     taskService.deleteTask(task.getId());
-                    if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+                    if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
                         historyService.deleteHistoricTaskInstance(task.getId());
                     }
                 }
@@ -835,7 +834,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
 
         Task assigneeToKermit = taskService.createTaskQuery().taskName("assigneeToKermit").singleResult();
         taskService.deleteTask(assigneeToKermit.getId());
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             historyService.deleteHistoricTaskInstance(assigneeToKermit.getId());
         }
     }
@@ -876,7 +875,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
 
         Task assigneeToKermit = taskService.createTaskQuery().or().taskId("invalid").taskName("assigneeToKermit").singleResult();
         taskService.deleteTask(assigneeToKermit.getId());
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             historyService.deleteHistoricTaskInstance(assigneeToKermit.getId());
         }
     }
@@ -2202,7 +2201,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(1, query.listPage(10, 1).size());
 
         // Verifying odd usages
-        assertEquals(0, query.listPage(-1, -1).size());
+        assertEquals(0, query.listPage(0, 0).size());
         assertEquals(0, query.listPage(11, 2).size()); // 10 is the last index
                                                        // with a result
         assertEquals(11, query.listPage(0, 15).size()); // there are only 11
@@ -2293,10 +2292,10 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertNotNull(task.getIdentityLinks());
         assertEquals(1, task.getIdentityLinks().size());
         IdentityLinkInfo identityLink = task.getIdentityLinks().get(0);
-        assertEquals(null, identityLink.getProcessInstanceId());
+        assertNull(identityLink.getProcessInstanceId());
         assertEquals("candidate", identityLink.getType());
         assertEquals("group1", identityLink.getGroupId());
-        assertEquals(null, identityLink.getUserId());
+        assertNull(identityLink.getUserId());
         assertEquals(task.getId(), identityLink.getTaskId());
 
         assertNotNull(task.getProcessVariables());
@@ -2431,7 +2430,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(1, taskService.createTaskQuery().taskNameLikeIgnoreCase("%Gonzo%").count());
         assertEquals(0, taskService.createTaskQuery().taskNameLikeIgnoreCase("Task%").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(12, historyService.createHistoricTaskInstanceQuery().taskNameLikeIgnoreCase("%task%").count());
             assertEquals(12, historyService.createHistoricTaskInstanceQuery().taskNameLikeIgnoreCase("%Task%").count());
@@ -2450,7 +2449,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
 
         assertEquals(9, taskService.createTaskQuery().or().taskNameLikeIgnoreCase("ACCOUN%").taskDescriptionLikeIgnoreCase("%ESCR%").endOr().count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(12, historyService.createHistoricTaskInstanceQuery().or().taskNameLikeIgnoreCase("%task%").taskDescriptionLikeIgnoreCase("%task%").endOr().count());
 
@@ -2471,7 +2470,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(1, taskService.createTaskQuery().taskDescriptionLikeIgnoreCase("Gonzo%").count());
         assertEquals(0, taskService.createTaskQuery().taskDescriptionLikeIgnoreCase("%manage%").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(6, historyService.createHistoricTaskInstanceQuery().taskDescriptionLikeIgnoreCase("%task%").count());
             assertEquals(6, historyService.createHistoricTaskInstanceQuery().taskDescriptionLikeIgnoreCase("%Task%").count());
@@ -2494,7 +2493,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(1, taskService.createTaskQuery().taskAssigneeLikeIgnoreCase("%nzo%").count());
         assertEquals(0, taskService.createTaskQuery().taskAssigneeLikeIgnoreCase("%doesnotexist%").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(1, historyService.createHistoricTaskInstanceQuery().taskAssigneeLikeIgnoreCase("%gonzo%").count());
             assertEquals(1, historyService.createHistoricTaskInstanceQuery().taskAssigneeLikeIgnoreCase("%GONZO%").count());
@@ -2515,7 +2514,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(6, taskService.createTaskQuery().taskOwnerLikeIgnoreCase("%nzo%").count());
         assertEquals(0, taskService.createTaskQuery().taskOwnerLikeIgnoreCase("%doesnotexist%").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(6, historyService.createHistoricTaskInstanceQuery().taskOwnerLikeIgnoreCase("%gonzo%").count());
             assertEquals(6, historyService.createHistoricTaskInstanceQuery().taskOwnerLikeIgnoreCase("%GONZO%").count());
@@ -2540,7 +2539,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(2, taskService.createTaskQuery().processInstanceBusinessKeyLikeIgnoreCase("business%").count());
         assertEquals(0, taskService.createTaskQuery().processInstanceBusinessKeyLikeIgnoreCase("%doesnotexist%").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(3, historyService.createHistoricTaskInstanceQuery().processInstanceBusinessKeyLikeIgnoreCase("%key%").count());
             assertEquals(3, historyService.createHistoricTaskInstanceQuery().processInstanceBusinessKeyLikeIgnoreCase("%KEY%").count());
@@ -2565,7 +2564,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(4, taskService.createTaskQuery().processDefinitionKeyLikeIgnoreCase("ON%").count());
         assertEquals(0, taskService.createTaskQuery().processDefinitionKeyLikeIgnoreCase("%fake%").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(4, historyService.createHistoricTaskInstanceQuery().processDefinitionKeyLikeIgnoreCase("%one%").count());
             assertEquals(4, historyService.createHistoricTaskInstanceQuery().processDefinitionKeyLikeIgnoreCase("%ONE%").count());
@@ -2580,7 +2579,7 @@ public class TaskQueryTest extends PluggableFlowableTestCase {
         assertEquals(12, taskService.createTaskQuery().or().taskNameLikeIgnoreCase("%task%").taskDescriptionLikeIgnoreCase("%desc%").taskAssigneeLikeIgnoreCase("Gonz%").taskOwnerLike("G%").endOr()
                 .count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             // History
             assertEquals(12, historyService.createHistoricTaskInstanceQuery().or().taskNameLikeIgnoreCase("%task%").taskDescriptionLikeIgnoreCase("%desc%").taskAssigneeLikeIgnoreCase("Gonz%")
                     .taskOwnerLike("G%").endOr().count());

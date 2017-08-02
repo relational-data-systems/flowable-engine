@@ -127,7 +127,8 @@ public abstract class AbstractEngineConfiguration {
     protected boolean transactionsExternallyManaged;
 
     /**
-     * Flag that can be set to configure or nota relational database is used. This is useful for custom implementations that do not use relational databases at all.
+     * Flag that can be set to configure or not a relational database is used. This is useful for custom implementations that do not use relational databases
+     * at all.
      * 
      * If true (default), the {@link AbstractEngineConfiguration#getDatabaseSchemaUpdate()} value will be used to determine what needs to happen wrt the database schema.
      * 
@@ -170,7 +171,7 @@ public abstract class AbstractEngineConfiguration {
      */
     protected boolean tablePrefixIsSchema;
 
-    protected static Properties databaseTypeMappings = getDefaultDatabaseTypeMappings();
+    protected Properties databaseTypeMappings = getDefaultDatabaseTypeMappings();
 
     public static final String DATABASE_TYPE_H2 = "h2";
     public static final String DATABASE_TYPE_HSQL = "hsql";
@@ -387,7 +388,6 @@ public abstract class AbstractEngineConfiguration {
                 properties.put("limitBetween", "");
                 properties.put("limitOuterJoinBetween", "");
                 properties.put("limitBeforeNativeQuery", "");
-                properties.put("orderBy", "order by ${orderByColumns}");
                 properties.put("blobType", "BLOB");
                 properties.put("boolValue", "TRUE");
 
@@ -406,7 +406,9 @@ public abstract class AbstractEngineConfiguration {
         }
     }
 
-    public abstract String pathToEngineDbProperties();
+    public String pathToEngineDbProperties() {
+        return "org/flowable/db/properties/" + databaseType + ".properties";
+    }
 
     public Configuration initMybatisConfiguration(Environment environment, Reader reader, Properties properties) {
         XMLConfigBuilder parser = new XMLConfigBuilder(reader, "", properties);

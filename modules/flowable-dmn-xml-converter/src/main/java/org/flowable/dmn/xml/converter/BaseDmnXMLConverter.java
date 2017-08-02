@@ -39,21 +39,35 @@ public abstract class BaseDmnXMLConverter implements DmnXMLConstants {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(BaseDmnXMLConverter.class);
 
+    private int elementCounter;
+
     public void convertToDmnModel(XMLStreamReader xtr, DmnDefinition model, DecisionTable decisionTable) throws Exception {
 
-        String elementId = xtr.getAttributeValue(null, ATTRIBUTE_ID);
-        String elementName = xtr.getAttributeValue(null, ATTRIBUTE_NAME);
+        //String elementId = xtr.getAttributeValue(null, ATTRIBUTE_ID);
+        //String elementName = xtr.getAttributeValue(null, ATTRIBUTE_NAME);
 
         DmnElement parsedElement = convertXMLToElement(xtr, model, decisionTable);
         // parsedElement.setId(elementId);
         // parsedElement.setName(elementName);
 
         if (parsedElement instanceof InputClause) {
-            decisionTable.addInput((InputClause) parsedElement);
+            InputClause inputClause = (InputClause) parsedElement;
+            inputClause.setInputNumber(elementCounter);
+            decisionTable.addInput(inputClause);
+
+            elementCounter++;
         } else if (parsedElement instanceof OutputClause) {
-            decisionTable.addOutput((OutputClause) parsedElement);
+            OutputClause outputClause = (OutputClause) parsedElement;
+            outputClause.setOutputNumber(elementCounter);
+            decisionTable.addOutput(outputClause);
+
+            elementCounter++;
         } else if (parsedElement instanceof DecisionRule) {
-            decisionTable.addRule((DecisionRule) parsedElement);
+            DecisionRule decisionRule = (DecisionRule) parsedElement;
+            decisionRule.setRuleNumber(elementCounter);
+            decisionTable.addRule(decisionRule);
+
+            elementCounter++;
         } else if (parsedElement instanceof ItemDefinition) {
             model.addItemDefinition((ItemDefinition) parsedElement);
         }
@@ -62,7 +76,6 @@ public abstract class BaseDmnXMLConverter implements DmnXMLConstants {
 
     public void convertToXML(XMLStreamWriter xtw, DmnElement baseElement, DmnDefinition model) throws Exception {
         xtw.writeStartElement(getXMLElementName());
-        boolean didWriteExtensionStartElement = false;
         writeDefaultAttribute(ATTRIBUTE_ID, baseElement.getId(), xtw);
 
         writeAdditionalAttributes(baseElement, model, xtw);
@@ -90,7 +103,7 @@ public abstract class BaseDmnXMLConverter implements DmnXMLConstants {
 
     protected void parseChildElements(String elementName, DmnElement parentElement, Map<String, BaseChildElementParser> additionalParsers, DecisionTable decisionTable, XMLStreamReader xtr) throws Exception {
 
-        Map<String, BaseChildElementParser> childParsers = new HashMap<String, BaseChildElementParser>();
+        Map<String, BaseChildElementParser> childParsers = new HashMap<>();
         if (additionalParsers != null) {
             childParsers.putAll(additionalParsers);
         }
@@ -105,5 +118,9 @@ public abstract class BaseDmnXMLConverter implements DmnXMLConstants {
 
     protected void writeQualifiedAttribute(String attributeName, String value, XMLStreamWriter xtw) throws Exception {
         DmnXMLUtil.writeQualifiedAttribute(attributeName, value, xtw);
+    }
+
+    protected void initializeElementCounter() {
+        elementCounter = 1;
     }
 }

@@ -1,3 +1,15 @@
+/* Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.flowable.bpmn.converter.util;
 
 import java.text.StringCharacterIterator;
@@ -29,6 +41,8 @@ import org.flowable.bpmn.converter.child.FieldExtensionParser;
 import org.flowable.bpmn.converter.child.FlowNodeRefParser;
 import org.flowable.bpmn.converter.child.FlowableEventListenerParser;
 import org.flowable.bpmn.converter.child.FlowableFailedjobRetryParser;
+import org.flowable.bpmn.converter.child.FlowableHttpRequestHandlerParser;
+import org.flowable.bpmn.converter.child.FlowableHttpResponseHandlerParser;
 import org.flowable.bpmn.converter.child.FlowableMapExceptionParser;
 import org.flowable.bpmn.converter.child.FormPropertyParser;
 import org.flowable.bpmn.converter.child.IOSpecificationParser;
@@ -52,7 +66,6 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
     private static Map<String, BaseChildElementParser> genericChildParserMap = new HashMap<String, BaseChildElementParser>();
 
     static {
-        addGenericParser(new FlowableEventListenerParser());
         addGenericParser(new CancelEventDefinitionParser());
         addGenericParser(new CompensateEventDefinitionParser());
         addGenericParser(new ConditionExpressionParser());
@@ -63,6 +76,9 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
         addGenericParser(new ErrorEventDefinitionParser());
         addGenericParser(new ExecutionListenerParser());
         addGenericParser(new FieldExtensionParser());
+        addGenericParser(new FlowableEventListenerParser());
+        addGenericParser(new FlowableHttpRequestHandlerParser());
+        addGenericParser(new FlowableHttpResponseHandlerParser());
         addGenericParser(new FormPropertyParser());
         addGenericParser(new IOSpecificationParser());
         addGenericParser(new MessageEventDefinitionParser());

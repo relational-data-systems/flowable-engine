@@ -15,6 +15,7 @@ package org.flowable.engine.test.bpmn.event.end;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,13 +26,18 @@ import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.EndEvent;
 import org.flowable.bpmn.model.ExtensionAttribute;
 import org.flowable.bpmn.model.ExtensionElement;
+import org.flowable.engine.common.api.delegate.event.FlowableEvent;
+import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.delegate.event.FlowableEngineEventType;
 import org.flowable.engine.history.DeleteReason;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.history.HistoricTaskInstance;
+import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Execution;
@@ -276,6 +282,36 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
         assertEquals(0, runtimeService.createProcessInstanceQuery().processInstanceId(pi.getId()).count());
         assertHistoricProcessInstanceDetails(pi);
     }
+    
+    @Deployment
+    public void testTerminateParallelGateway() throws Exception {
+        final List<FlowableEvent> events = new ArrayList<>();
+        processEngine.getRuntimeService().addEventListener(new FlowableEventListener() {
+            
+            @Override
+            public void onEvent(FlowableEvent event) {
+                if (FlowableEngineEventType.PROCESS_COMPLETED_WITH_TERMINATE_END_EVENT == event.getType() || FlowableEngineEventType.TASK_CREATED == event.getType()) {
+                    events.add(event);
+                }
+                
+                if (FlowableEngineEventType.ACTIVITY_CANCELLED == event.getType()) {
+                    List<Task> list = Context.getProcessEngineConfiguration().getTaskService().createTaskQuery().list();
+                    if (!list.isEmpty()) {
+                        events.add(event);
+                    }
+                }
+            }
+            
+            @Override
+            public boolean isFailOnException() {
+                return false;
+            }
+        });
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("terminateParallel");
+        
+        HistoricTaskInstance historicTask = historyService.createHistoricTaskInstanceQuery().processInstanceId(pi.getId()).taskDefinitionKey("task").singleResult();
+        assertNull(historicTask);
+    }
 
     @Deployment
     public void testTerminateInSubProcess() throws Exception {
@@ -344,7 +380,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
         // complete outerTask
         task = taskService.createTaskQuery().processInstanceId(pi.getId()).taskDefinitionKey("outerTask").singleResult();
         taskService.complete(task.getId());
-
+        
         assertProcessEnded(pi.getId());
         assertHistoricProcessInstanceDetails(pi);
     }
@@ -595,6 +631,9 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
         assertEquals("After call activity", task.getName());
 
         taskService.complete(task.getId());
+        
+        waitForHistoryJobExecutorToProcessAllJobs(5000, 100);
+        
         assertProcessEnded(processInstance.getId());
         assertHistoricProcessInstanceDetails(processInstance);
     }
@@ -629,6 +668,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
         assertEquals("After call activity", task.getName());
 
         taskService.complete(task.getId());
+        
         assertProcessEnded(processInstance.getId());
         assertHistoricProcessInstanceDetails(processInstance);
 
@@ -960,7 +1000,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
     }
 
     protected void assertHistoricProcessInstanceDetails(String processInstanceId) {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceId(processInstanceId).singleResult();
 
@@ -971,7 +1011,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
     }
 
     protected void assertHistoricProcessInstanceDeleteReason(ProcessInstance processInstance, String expectedDeleteReason) {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceId(processInstance.getId()).singleResult();
             if (expectedDeleteReason == null) {
@@ -983,7 +1023,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
     }
 
     protected void assertHistoricTasksDeleteReason(ProcessInstance processInstance, String expectedDeleteReason, String... taskNames) {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             for (String taskName : taskNames) {
                 List<HistoricTaskInstance> historicTaskInstances = historyService.createHistoricTaskInstanceQuery()
                         .processInstanceId(processInstance.getId()).taskName(taskName).list();
@@ -1001,7 +1041,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
     }
 
     protected void assertHistoricActivitiesDeleteReason(ProcessInstance processInstance, String expectedDeleteReason, String... activityIds) {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             for (String activityId : activityIds) {
                 List<HistoricActivityInstance> historicActiviyInstances = historyService.createHistoricActivityInstanceQuery()
                         .activityId(activityId).processInstanceId(processInstance.getId()).list();

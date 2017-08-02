@@ -1,9 +1,9 @@
 /* Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -151,9 +151,12 @@ public class ProcessInstanceHelper {
         }
 
         ExecutionEntity processInstance = commandContext.getExecutionEntityManager()
-                .createProcessInstanceExecution(processDefinition, businessKey, processDefinition.getTenantId(), initiatorVariableName);
+                .createProcessInstanceExecution(processDefinition, businessKey, processDefinition.getTenantId(), 
+                                initiatorVariableName, initialFlowElement.getId());
 
-        commandContext.getHistoryManager().recordProcessInstanceStart(processInstance, initialFlowElement);
+        processInstance.setName(processInstanceName);
+
+        commandContext.getHistoryManager().recordProcessInstanceStart(processInstance);
 
         boolean eventDispatcherEnabled = Context.getProcessEngineConfiguration().getEventDispatcher().isEnabled();
         if (eventDispatcherEnabled) {
@@ -173,12 +176,6 @@ public class ProcessInstanceHelper {
             for (String varName : transientVariables.keySet()) {
                 processInstance.setTransientVariable(varName, transientVariables.get(varName));
             }
-        }
-
-        // Set processInstance name
-        if (processInstanceName != null) {
-            processInstance.setName(processInstanceName);
-            commandContext.getHistoryManager().recordProcessInstanceNameChange(processInstance.getId(), processInstanceName);
         }
 
         // Fire events
@@ -245,6 +242,7 @@ public class ProcessInstanceHelper {
                     ExecutionEntity messageExecution = commandContext.getExecutionEntityManager().createChildExecution(parentExecution);
                     messageExecution.setCurrentFlowElement(startEvent);
                     messageExecution.setEventScope(true);
+                    messageExecution.setActive(false);
 
                     messageEventSubscriptions.add(commandContext.getEventSubscriptionEntityManager().insertMessageEvent(
                             messageEventDefinition.getMessageRef(), messageExecution));
@@ -261,6 +259,7 @@ public class ProcessInstanceHelper {
                     ExecutionEntity signalExecution = commandContext.getExecutionEntityManager().createChildExecution(parentExecution);
                     signalExecution.setCurrentFlowElement(startEvent);
                     signalExecution.setEventScope(true);
+                    signalExecution.setActive(false);
 
                     signalEventSubscriptions.add(commandContext.getEventSubscriptionEntityManager().insertSignalEvent(
                             signalEventDefinition.getSignalRef(), signal, signalExecution));
@@ -271,6 +270,7 @@ public class ProcessInstanceHelper {
                     ExecutionEntity timerExecution = commandContext.getExecutionEntityManager().createChildExecution(parentExecution);
                     timerExecution.setCurrentFlowElement(startEvent);
                     timerExecution.setEventScope(true);
+                    timerExecution.setActive(false);
 
                     JobManager jobManager = commandContext.getJobManager();
 

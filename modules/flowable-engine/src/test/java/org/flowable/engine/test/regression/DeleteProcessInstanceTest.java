@@ -1,3 +1,15 @@
+/* Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.flowable.engine.test.regression;
 
 import java.util.HashMap;
@@ -5,6 +17,7 @@ import java.util.Map;
 
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.Job;
@@ -14,8 +27,6 @@ import org.flowable.engine.test.Deployment;
 //SLF4J
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-//JUnit
 
 /**
  * From http://forums.activiti.org/content/inability-completely-delete-process- instance-when
@@ -51,7 +62,7 @@ public class DeleteProcessInstanceTest extends PluggableFlowableTestCase {
         // Delete the process instance.
         runtimeService.deleteProcessInstance(instanceUser.getId(), null);
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             // Retrieve the HistoricProcessInstance and assert that there is an
             // end time.
             HistoricProcessInstance hInstanceUser = historyService.createHistoricProcessInstanceQuery().processInstanceId(instanceUser.getId()).singleResult();
@@ -112,7 +123,7 @@ public class DeleteProcessInstanceTest extends PluggableFlowableTestCase {
         // Delete the process instance.
         runtimeService.deleteProcessInstance(instanceJava.getId(), null);
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             // Retrieve the HistoricProcessInstance and assert that there is no
             // end time.
             HistoricProcessInstance hInstanceJava = historyService.createHistoricProcessInstanceQuery().processInstanceId(instanceJava.getId()).singleResult();
