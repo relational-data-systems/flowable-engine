@@ -6,31 +6,31 @@
   <groupId>au.com.rds.sb</groupId>
   <artifactId>rds-designer</artifactId>
   <packaging>pom</packaging>
-  <version>1.1.0</version>
-  
+  <version>1.2.0</version>
+
   <parent>
     <groupId>org.flowable</groupId>
     <artifactId>flowable-root</artifactId>
     <relativePath>../..</relativePath>
     <version>6.1.0</version>
   </parent>
-  
+
   <properties>
     	<!-- Maven build properties -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.7</java.version>
-		
+
 		<!-- Web container version -->
 		<tomcat.version>7.0.53</tomcat.version>
 
-        <system-builder.version>1.1.0</system-builder.version>
+        <system-builder.version>1.2.0</system-builder.version>
         <flowable.version>6.1.0</flowable.version>
   </properties>
 
 	<prerequisites>
 		<maven>3.0.0</maven>
 	</prerequisites>
-	
+
 	<modules>
 		<module>flowable-ui-modeler-logic</module>
 		<module>flowable-ui-modeler-rest</module>
@@ -65,7 +65,7 @@
             <artifactId>flowable-ui-modeler-conf</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
+
         <!-- overrides what defined in parent due to project.version -->
         <dependency>
           <groupId>org.flowable</groupId>
@@ -369,6 +369,11 @@
 			<!-- Force alphabetical order to have a reproducible build -->
 			<runOrder>alphabetical</runOrder>
 		</configuration>
+      </plugin>
+      <plugin>
+        <!-- use later version so can get alt***DeploymentRepository properties -->
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8</version>
       </plugin>
     </plugins>
   </build>
