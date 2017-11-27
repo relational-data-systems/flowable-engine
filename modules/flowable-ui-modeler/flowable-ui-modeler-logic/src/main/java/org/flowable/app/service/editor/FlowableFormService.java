@@ -13,6 +13,7 @@
 package org.flowable.app.service.editor;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
@@ -39,7 +40,10 @@ import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import au.com.rds.schemaformbuilder.formdesignjson.FormDesignJsonService;
 
 /**
  * @author Tijs Rademakers
@@ -159,7 +163,16 @@ public class FlowableFormService {
     if(model.getLastUpdated().getTime()!=lastUpdated && !newVersion) {
       throw new ConflictingRequestException("Form has been updated by " + model.getLastUpdatedBy() + " in meantime");
     }
-    
+
+    ObjectNode definitionNode = (ObjectNode) jsonNode.get("definition");
+
+    ObjectNode metaNode = definitionNode.with("metadata");
+    ArrayNode historyNode = metaNode.withArray("provenance");
+    ObjectNode newHistory = historyNode.addObject();
+    newHistory.put("user", user.getId());
+    newHistory.put("time", new Date().getTime());
+    newHistory.put("designerVersion", this.getVersionFromJar());
+
     String editorJson = jsonNode.get("definition").toString();
 
     String filteredImageString = jsonNode.get("formImageBase64").textValue().replace("data:image/png;base64,", "");
@@ -184,5 +197,10 @@ public class FlowableFormService {
     FormRepresentation result = new FormRepresentation(model);
     result.setFormDefinition(formDefinition);
     return result;
+  }
+
+  private String getVersionFromJar()
+  {
+    return FormDesignJsonService.class.getPackage().getImplementationVersion();
   }
 }
