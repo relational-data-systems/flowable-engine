@@ -164,9 +164,8 @@ public class FlowableModelQueryService {
     {
       BpmnModel bpmnModel = readFromFile(file);
 
-      // Its got information about how to display the bpmn diagram in the modeler (x, y coordinates, height and width etc.)
-      // so call
-      if (MapUtils.isNotEmpty(bpmnModel.getLocationMap()))
+      // Auto format the bpmn if not location data is attached to the model already
+      if (MapUtils.isEmpty(bpmnModel.getLocationMap()))
       {
         new BpmnAutoLayout(bpmnModel).execute();
       }
@@ -274,7 +273,7 @@ public class FlowableModelQueryService {
         }
       }
 
-      // Return validation result if process with same key or any form with same form key exists if overwrite is false
+      // Throw validation exception if any form with same form key exists and overwrite is false
       if (!overwrite && CollectionUtils.isNotEmpty(existingForms))
       {
         throw new BpmnFileValidationException(Collections.singletonMap("existingForms", existingForms));
