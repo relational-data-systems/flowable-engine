@@ -377,13 +377,22 @@ public class FlowableModelQueryService {
     //file "endings" because they aren't really an extension
     List<String> validFileEndings = Arrays.asList(BpmnFile.BPMN20_XML_ENDING, BpmnFile.BPMN_EXT);
 
-    if (StringUtils.isBlank(fileName) || (StringUtils.isNotBlank(fileName) && validFileEndings.stream()
-        .noneMatch(fileName::endsWith)))
+    if (StringUtils.isBlank(fileName) || !endsWithOneOf(fileName, validFileEndings))
     {
       throw new BpmnFileValidationException(Collections.singletonMap("message",
           "Invalid file name [" + fileName + "], only the following file types are supported (" + StringUtils
               .join(validFileEndings, ", ") + ")."));
     }
+  }
+
+  private boolean endsWithOneOf(String toTest, List<String> validEndings) {
+      for (String validEnding : validEndings) {
+        if (toTest.endsWith(validEnding))
+        {
+          return true;
+        }
+      }
+      return false;
   }
 
   protected ModelRepresentation createModelRepresentation(AbstractModel model)
