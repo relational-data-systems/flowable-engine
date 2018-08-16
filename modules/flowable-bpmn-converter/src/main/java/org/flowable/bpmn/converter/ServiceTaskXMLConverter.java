@@ -12,6 +12,8 @@
  */
 package org.flowable.bpmn.converter;
 
+import java.util.ArrayList;
+
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -22,6 +24,7 @@ import org.flowable.bpmn.model.AbstractFlowableHttpHandler;
 import org.flowable.bpmn.model.BaseElement;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.CustomProperty;
+import org.flowable.bpmn.model.ExtensionAttribute;
 import org.flowable.bpmn.model.HttpServiceTask;
 import org.flowable.bpmn.model.ImplementationType;
 import org.flowable.bpmn.model.ServiceTask;
@@ -80,6 +83,10 @@ public class ServiceTaskXMLConverter extends BaseBpmnXMLConverter {
         if (StringUtils.isNotEmpty(BpmnXMLUtil.getAttributeValue(ATTRIBUTE_TASK_SERVICE_SKIP_EXPRESSION, xtr))) {
             serviceTask.setSkipExpression(BpmnXMLUtil.getAttributeValue(ATTRIBUTE_TASK_SERVICE_SKIP_EXPRESSION, xtr));
         }
+
+      BpmnXMLUtil.addCustomAttributes(xtr, serviceTask, defaultElementAttributes,
+          defaultActivityAttributes, new ArrayList<ExtensionAttribute>());
+
         parseChildElements(getXMLElementName(), serviceTask, model, xtr);
 
         return serviceTask;
@@ -110,6 +117,10 @@ public class ServiceTaskXMLConverter extends BaseBpmnXMLConverter {
         if (StringUtils.isNotEmpty(serviceTask.getSkipExpression())) {
             writeQualifiedAttribute(ATTRIBUTE_TASK_SERVICE_SKIP_EXPRESSION, serviceTask.getSkipExpression(), xtw);
         }
+
+      // write custom attributes
+      BpmnXMLUtil.writeCustomAttributes(serviceTask.getAttributes().values(), xtw, defaultElementAttributes,
+          defaultActivityAttributes, new ArrayList<ExtensionAttribute>());
     }
 
     @Override
