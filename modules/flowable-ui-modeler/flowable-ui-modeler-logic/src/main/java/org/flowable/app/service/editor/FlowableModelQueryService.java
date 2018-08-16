@@ -202,7 +202,7 @@ public class FlowableModelQueryService {
       if (CollectionUtils.isEmpty(bpmnModel.getProcesses()))
       {
         throw new BpmnFileValidationException(
-            Collections.singletonMap("message", "No process found in definition [" + fileName + "]"));
+            Collections.<String, Object>singletonMap("message", "No process found in definition [" + fileName + "]"));
       }
 
       return bpmnModel;
@@ -239,7 +239,8 @@ public class FlowableModelQueryService {
 
     if (process == null)
     {
-      throw new BpmnFileValidationException(Collections.singletonMap("message", "Main business process is null"));
+      throw new BpmnFileValidationException(
+          Collections.<String, Object>singletonMap("message", "Main business process is null"));
     }
 
     List existingProcessModels = modelRepository.findByKeyAndType(process.getId(), AbstractModel.MODEL_TYPE_BPMN);
@@ -276,7 +277,7 @@ public class FlowableModelQueryService {
       // Throw validation exception if any form with same form key exists and overwrite is false
       if (!overwrite && CollectionUtils.isNotEmpty(existingForms))
       {
-        throw new BpmnFileValidationException(Collections.singletonMap("existingForms", existingForms));
+        throw new BpmnFileValidationException(Collections.<String, Object>singletonMap("existingForms", existingForms));
       }
 
       for (ExtensionElement eeForm : forms)
@@ -379,7 +380,7 @@ public class FlowableModelQueryService {
 
     if (StringUtils.isBlank(fileName) || !endsWithOneOf(fileName, validFileEndings))
     {
-      throw new BpmnFileValidationException(Collections.singletonMap("message",
+      throw new BpmnFileValidationException(Collections.<String, Object>singletonMap("message",
           "Invalid file name [" + fileName + "], only the following file types are supported (" + StringUtils
               .join(validFileEndings, ", ") + ")."));
     }
