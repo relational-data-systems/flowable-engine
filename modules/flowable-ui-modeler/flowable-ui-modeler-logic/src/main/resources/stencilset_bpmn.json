@@ -437,7 +437,7 @@
     "name": "mailtasktemplateidpackage",
     "properties": [
       {
-        "id": "mailtasktemplateId",
+        "id": "mailtasktemplateid",
         "type": "String",
         "title": "Template ID",
         "value": "",
@@ -449,7 +449,7 @@
     "name": "mailtaskreplacementobjectpackage",
     "properties": [
       {
-        "id": "mailtaskreplacementObject",
+        "id": "mailtaskreplacementobject",
         "type": "String",
         "title": "Replacement Object",
         "value": "",
