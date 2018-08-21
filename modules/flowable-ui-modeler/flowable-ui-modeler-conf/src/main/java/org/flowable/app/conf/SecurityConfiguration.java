@@ -14,17 +14,23 @@ package org.flowable.app.conf;
 
 import java.util.Collections;
 
+import javax.servlet.Filter;
+
+import org.apache.commons.lang3.StringUtils;
 import org.flowable.app.filter.FlowableCookieFilter;
 import org.flowable.app.security.AjaxLogoutSuccessHandler;
 import org.flowable.app.security.ClearFlowableCookieLogoutHandler;
 import org.flowable.app.security.DefaultPrivileges;
 import org.flowable.app.security.RemoteIdmAuthenticationProvider;
+import org.flowable.app.security.SkipAuthenticationFilter;
+import org.flowable.app.security.SkipAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,20 +41,28 @@ import org.springframework.security.web.header.writers.XXssProtectionHeaderWrite
 
 /**
  * Based on http://docs.spring.io/spring-security/site/docs/3.2.x/reference/htmlsingle/#multiple-httpsecurity
- * 
+ *
  * @author Joram Barrez
  * @author Tijs Rademakers
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
 
+    private static final String ACTIVE_PROFILE_KEY = "spring.profiles.active";
+
+
     public static final String REST_ENDPOINTS_PREFIX = "/app/rest";
-    
+
     @Autowired
     protected RemoteIdmAuthenticationProvider authenticationProvider;
+
+    @Autowired
+    private Environment environment;
+
+
 
     @Bean
     public FlowableCookieFilter flowableCookieFilter() {
@@ -56,13 +70,18 @@ public class SecurityConfiguration {
         filter.setRequiredPrivileges(Collections.singletonList(DefaultPrivileges.ACCESS_MODELER));
         return filter;
     }
-    
+
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) {
 
         // Default auth (database backed)
         try {
-            auth.authenticationProvider(authenticationProvider);
+            if(StringUtils.isBlank(environment.getProperty(ACTIVE_PROFILE_KEY)))
+            {
+                auth.authenticationProvider(new SkipAuthenticationProvider());
+            } else {
+                auth.authenticationProvider(authenticationProvider);
+            }
         } catch (Exception e) {
             logger.error("Could not configure authentication mechanism:", e);
         }
@@ -75,16 +94,24 @@ public class SecurityConfiguration {
         @Autowired
         protected FlowableCookieFilter flowableCookieFilter;
 
+
         @Autowired
         protected AjaxLogoutSuccessHandler ajaxLogoutSuccessHandler;
 
+        @Autowired
+        private Environment environment;
+
         @Override
         protected void configure(HttpSecurity http) throws Exception {
+            Filter filter = flowableCookieFilter;
+            if(StringUtils.isBlank(environment.getProperty(ACTIVE_PROFILE_KEY))) {
+                filter = new SkipAuthenticationFilter();
+            }
             http
                 .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                    .addFilterBefore(flowableCookieFilter, UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                     .logout()
                         .logoutUrl("/app/logout")
                         .logoutSuccessHandler(ajaxLogoutSuccessHandler)
@@ -101,7 +128,7 @@ public class SecurityConfiguration {
                     .antMatchers(REST_ENDPOINTS_PREFIX + "/**").hasAuthority(DefaultPrivileges.ACCESS_MODELER);
         }
     }
-    
+
     //
     // BASIC AUTH
     //
