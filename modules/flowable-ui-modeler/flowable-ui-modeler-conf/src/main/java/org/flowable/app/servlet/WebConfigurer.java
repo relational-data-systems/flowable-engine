@@ -21,6 +21,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletRegistration;
 
+import org.apache.commons.lang3.StringUtils;
 import org.flowable.app.conf.ApplicationConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,14 @@ public class WebConfigurer implements ServletContextListener {
 
         if (context == null) {
             rootContext = new AnnotationConfigWebApplicationContext();
+
+            //Put designerVersion to system properties, a bit hacky. There might be better way to do this.
+            String designerVersion = WebConfigurer.class.getPackage().getSpecificationVersion();
+            if(StringUtils.isBlank(designerVersion)) {
+                designerVersion = "unknowVersion";
+            }
+            rootContext.getEnvironment().getSystemProperties().put("designerVersion", designerVersion);
+
             rootContext.register(ApplicationConfiguration.class);
 
             if (rootContext.getServletContext() == null) {
