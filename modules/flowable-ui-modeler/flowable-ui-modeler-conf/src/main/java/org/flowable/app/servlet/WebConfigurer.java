@@ -38,6 +38,10 @@ public class WebConfigurer implements ServletContextListener {
 
     private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
 
+    public static String DESIGNER_VERSION = "designerVersion";
+
+    public static String UNKNOWN_DESIGNER_VERSION = "unknownVesrion";
+
     public AnnotationConfigWebApplicationContext context;
 
     public void setContext(AnnotationConfigWebApplicationContext context) {
@@ -55,12 +59,13 @@ public class WebConfigurer implements ServletContextListener {
         if (context == null) {
             rootContext = new AnnotationConfigWebApplicationContext();
 
-            //Put designerVersion to system properties, a bit hacky. There might be better way to do this.
+            //Start Put designerVersion to system properties, a bit hacky. There might be better way to do this.
             String designerVersion = WebConfigurer.class.getPackage().getSpecificationVersion();
             if(StringUtils.isBlank(designerVersion)) {
-                designerVersion = "unknowVersion";
+                designerVersion = UNKNOWN_DESIGNER_VERSION;
             }
-            rootContext.getEnvironment().getSystemProperties().put("designerVersion", designerVersion);
+            rootContext.getEnvironment().getSystemProperties().put(DESIGNER_VERSION, designerVersion);
+            // End Put designerVersion to system properties
 
             rootContext.register(ApplicationConfiguration.class);
 
