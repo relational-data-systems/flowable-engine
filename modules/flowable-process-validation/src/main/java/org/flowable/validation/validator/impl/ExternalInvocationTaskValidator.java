@@ -48,7 +48,7 @@ public abstract class ExternalInvocationTaskValidator extends ProcessLevelValida
             addError(errors, Problems.MAIL_TASK_NO_RECIPIENT, process, task, "No recipient is defined on the mail activity");
         }
         if (!textOrHtmlDefined) {
-          addError(errors, Problems.MAIL_TASK_NO_CONTENT, process, task, "Text, html, textVar or htmlVar field should be provided");
+            addError(errors, Problems.MAIL_TASK_NO_CONTENT, process, task, "Text, html, textVar or htmlVar field should be provided");
         }
     }
 
