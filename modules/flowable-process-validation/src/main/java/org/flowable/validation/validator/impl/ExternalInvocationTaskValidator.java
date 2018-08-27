@@ -12,11 +12,7 @@
  */
 package org.flowable.validation.validator.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.flowable.bpmn.model.FieldExtension;
 import org.flowable.bpmn.model.TaskWithFieldExtensions;
@@ -46,16 +42,13 @@ public abstract class ExternalInvocationTaskValidator extends ProcessLevelValida
             if (fieldExtension.getFieldName().equals("textVar")) {
                 textOrHtmlDefined = true;
             }
-            if (fieldExtension.getFieldName().equals("templateid")) {
-               textOrHtmlDefined = true;
-            }
         }
 
         if (!toDefined) {
             addError(errors, Problems.MAIL_TASK_NO_RECIPIENT, process, task, "No recipient is defined on the mail activity");
         }
         if (!textOrHtmlDefined) {
-            addError(errors, Problems.MAIL_TASK_NO_CONTENT, process, task, "Text, html, templateId, textVar or htmlVar field should be provided");
+          addError(errors, Problems.MAIL_TASK_NO_CONTENT, process, task, "Text, html, textVar or htmlVar field should be provided");
         }
     }
 
