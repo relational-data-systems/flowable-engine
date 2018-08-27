@@ -277,7 +277,10 @@ public class FlowableModelQueryService {
       // Throw validation exception if any form with same form key exists and overwrite is false
       if (!overwrite && CollectionUtils.isNotEmpty(existingForms))
       {
-        throw new BpmnFileValidationException(Collections.<String, Object>singletonMap("existingForms", existingForms));
+        Map<String, Object> validationErrors = new HashMap<>();
+        validationErrors.put("message", "Form(s) with the same key already exist");
+        validationErrors.put("existingForms", existingForms);
+        throw new BpmnFileValidationException(validationErrors);
       }
 
       for (ExtensionElement eeForm : forms)
