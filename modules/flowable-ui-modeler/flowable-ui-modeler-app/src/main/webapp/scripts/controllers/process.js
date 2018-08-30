@@ -172,10 +172,11 @@ angular.module('flowableModeler')
         }
     };
     
-    $scope.deploy = function() {
+    $scope.doAction = function(action) {
       if ($scope.model.process) {
         
      // Config for the modal window
+        $scope.action = action;
         var opts = {
             template:  'editor-app/popups/corslogin.html?version=' + Date.now(),
             scope: $scope
@@ -183,8 +184,6 @@ angular.module('flowableModeler')
 
         // Open the dialog
         _internalCreateModal(opts, $modal, $scope);
-        
-        
       }      
     }
     
