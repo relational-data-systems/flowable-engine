@@ -9,7 +9,7 @@ angular.module('flowableModeler')
     
     vm.deployOptions = FLOWABLE.CONFIG.deployUrls || [];
     
-    vm.doAction = doAction();
+    vm.doAction = doAction;
     vm.cancel = cancel;
     vm.capitalizedAction = capitalizedAction;
     
@@ -21,7 +21,7 @@ angular.module('flowableModeler')
             case 'deploy':
                 withLogin(_deploy);
                 break;
-            case 'activiate':
+            case 'activate':
                 withLogin(_activate);
                 break;
             case 'suspend':
@@ -53,12 +53,12 @@ angular.module('flowableModeler')
     }
 
     function _suspend(authdata) {
-        var url = vm.deployUrl.replace("deploy", "suspend") + "/"+ vm.processKey;
+        var url = vm.deployUrl.replace("deploy", "suspend") + "/"+ processKey;
         _runtimeApiCall(authdata, "Suspend", url, {})
     }
 
     function _activate(authdata) {
-        var url = vm.deployUrl.replace("deploy", "activate") + "/"+ vm.processKey;
+        var url = vm.deployUrl.replace("deploy", "activate") + "/"+ processKey;
         _runtimeApiCall(authdata, "activate", url, {})
     }
 
@@ -78,7 +78,7 @@ angular.module('flowableModeler')
             if (deployResponse.status == "401") {
                 vm.errorMsg = "Wrong username or password! try again";
             } else if (deployResponse.status == "400") {
-                vm.errorMsg = deployResponse.data.errorMessage;
+                vm.errorMsg = deployResponse.data.error;
             } else {
                 vm.errorMsg = "Something went wrong, please ask system administrator for help!";
             }
