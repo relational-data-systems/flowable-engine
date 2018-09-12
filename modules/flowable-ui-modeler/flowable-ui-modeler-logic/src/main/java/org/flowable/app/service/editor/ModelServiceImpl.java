@@ -950,6 +950,22 @@ public class ModelServiceImpl implements ModelService {
           }
         }
 
+        parentNodes = objectNode.findParents("formIdForSubModelApi");
+        if (parentNodes != null)
+        {
+          for (JsonNode parent : parentNodes)
+          {
+              if ("array".equalsIgnoreCase(parent.get("type").asText()))
+              {
+                  String formId = parent.get("formIdForSubModelApi").asText();
+                  if (StringUtils.isNotBlank(formId) && !processedForms.containsKey(formId))
+                  {
+                      addFormToProcess(process, formId, processedForms, resolveFormReference);
+                  }
+              }
+          }
+        }
+
         if(!resolveFormReference)
         {
             for (String refKey : refKeys)
