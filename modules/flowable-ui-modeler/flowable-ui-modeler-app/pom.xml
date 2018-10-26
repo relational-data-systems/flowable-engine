@@ -332,7 +332,7 @@
                                 </goals>
                                 <phase>package</phase>
                                 <configuration>
-                                    <path>/flowable-modeler</path>
+                                    <path>/designer</path>
                                 </configuration>
                             </execution>
                         </executions>
