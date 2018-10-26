@@ -21,6 +21,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletRegistration;
 
+import org.apache.commons.lang3.StringUtils;
 import org.flowable.app.conf.ApplicationConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,10 @@ import org.springframework.web.servlet.DispatcherServlet;
 public class WebConfigurer implements ServletContextListener {
 
     private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
+
+    public static String DESIGNER_VERSION = "designerVersion";
+
+    public static String UNKNOWN_DESIGNER_VERSION = "unknownVesrion";
 
     public AnnotationConfigWebApplicationContext context;
 
@@ -53,6 +58,15 @@ public class WebConfigurer implements ServletContextListener {
 
         if (context == null) {
             rootContext = new AnnotationConfigWebApplicationContext();
+
+            //Start Put designerVersion to system properties, a bit hacky. There might be better way to do this.
+            String designerVersion = WebConfigurer.class.getPackage().getSpecificationVersion();
+            if(StringUtils.isBlank(designerVersion)) {
+                designerVersion = UNKNOWN_DESIGNER_VERSION;
+            }
+            rootContext.getEnvironment().getSystemProperties().put(DESIGNER_VERSION, designerVersion);
+            // End Put designerVersion to system properties
+
             rootContext.register(ApplicationConfiguration.class);
 
             if (rootContext.getServletContext() == null) {
