@@ -191,7 +191,10 @@
             "EDIT-CONFIRM": "Save",
             "DELETE-CONFIRM": "Delete process model",
             "USE-AS-NEW-VERSION": "Use as new version",
-            "FAVORITE": "Favorite this model"
+            "FAVORITE": "Favorite this model",
+            "DEPLOY": "Deploy to runtime",
+            "SUSPEND": "Suspend this process",
+            "ACTIVATE": "Activate this process"
 
         },
         "DETAILS": {

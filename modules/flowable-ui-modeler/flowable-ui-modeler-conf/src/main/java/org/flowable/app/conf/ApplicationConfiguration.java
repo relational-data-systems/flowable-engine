@@ -13,6 +13,7 @@
 package org.flowable.app.conf;
 
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -21,38 +22,65 @@ import org.springframework.context.annotation.PropertySources;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 @Configuration
-@PropertySources({
-
-    @PropertySource("classpath:/META-INF/flowable-ui-app/flowable-ui-app.properties"),
-    @PropertySource(value = "classpath:flowable-ui-app.properties", ignoreResourceNotFound = true),
-    @PropertySource(value = "file:flowable-ui-app.properties", ignoreResourceNotFound = true),
-
-})
-@ComponentScan(basePackages = {
-    "org.flowable.app.conf",
-    "org.flowable.app.repository",
-    "org.flowable.app.service",
-    "org.flowable.app.filter",
-    "org.flowable.app.security",
-    "org.flowable.app.model.component",
-    "au.com.rds.schemaformbuilder.util"})
 public class ApplicationConfiguration
 {
-
   /**
-     * This is needed to make property resolving work on annotations ... (see http://stackoverflow.com/questions/11925952/custom-spring-property-source-does-not-resolve-placeholders-in-value)
+   * This is needed to make property resolving work on annotations ... (see http://stackoverflow.com/questions/11925952/custom-spring-property-source-does-not-resolve-placeholders-in-value)
    *
    * @Scheduled(cron="${someProperty}")
    */
   @Bean
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+  public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer()
+  {
     return new PropertySourcesPlaceholderConfigurer();
   }
 
   @Bean
-    public static PropertyPlaceholderConfigurer propertyPlaceholderConfigurer() {
+  public static PropertyPlaceholderConfigurer propertyPlaceholderConfigurer()
+  {
     PropertyPlaceholderConfigurer placeholderConfigurer = new PropertyPlaceholderConfigurer();
     placeholderConfigurer.setSystemPropertiesMode(PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE);
     return placeholderConfigurer;
+  }
+
+  @Configuration
+  @ConditionalOnProperty(prefix = "spring.profiles", value = "active")
+  @PropertySources({
+
+      @PropertySource("classpath:/META-INF/flowable-ui-app/flowable-ui-app.properties"),
+      @PropertySource(value = "classpath:flowable-ui-app.properties", ignoreResourceNotFound = true),
+      @PropertySource(value = "file:flowable-ui-app.properties", ignoreResourceNotFound = true),
+
+  })
+  @ComponentScan(basePackages = {
+      "org.flowable.app.conf",
+      "org.flowable.app.repository",
+      "org.flowable.app.service",
+      "org.flowable.app.filter",
+      "org.flowable.app.security",
+      "org.flowable.app.model.component",
+      "au.com.rds.schemaformbuilder.util" })
+  public static class ConfigurationWithProfile
+  {
+
+  }
+
+  @Configuration
+  @ConditionalOnProperty(prefix = "spring.profiles", value = "active", matchIfMissing = true)
+  @PropertySources({
+      @PropertySource(value = "classpath:/META-INF/flowable-ui-app/flowable-ui-app.standalone.properties"),
+      @PropertySource(value = "file:${user.home}/.sb_designer/${designerVersion}/flowable-ui-app.properties", ignoreResourceNotFound = true)
+  })
+  @ComponentScan(basePackages = {
+      "org.flowable.app.conf",
+      "org.flowable.app.repository",
+      "org.flowable.app.service",
+      "org.flowable.app.filter",
+      "org.flowable.app.security",
+      "org.flowable.app.model.component",
+      "au.com.rds.schemaformbuilder.util" })
+  public static class ConfigurationWithoutProfile
+  {
+
   }
 }

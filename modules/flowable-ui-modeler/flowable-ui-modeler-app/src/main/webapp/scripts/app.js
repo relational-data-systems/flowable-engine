@@ -305,14 +305,28 @@ flowableModeler
                     });
                 }
             };
-            
+
             $http.get(FLOWABLE.CONFIG.contextRoot + '/app/rest/account')
 	        	.success(function (data, status, headers, config) {
 	              	$rootScope.account = data;
 	               	$rootScope.invalidCredentials = false;
 	 				$rootScope.authenticated = true;
-	          	});
-	          	
+	          	}).error(function (data, status, headers, config) {
+                    /*
+                       IDM app is not up, meanning designer is used in standalone mode, so we just fake some info, maybe need to handle it better
+                       We can improve it by getting the user name from server, that will need a new service
+                    */
+                    $rootScope.account = {
+                        firstName: "Firstname",
+                        lastName: "Lastname",
+                        fullName: "Firstname Lastname",
+                        id: "fakeId",
+                        privileges: ["access-modeler"]
+                    };
+                    $rootScope.invalidCredentials = false;
+                    $rootScope.authenticated = true;
+                });
+
 	        $rootScope.logout = function () {
                 $rootScope.authenticated = false;
                 $rootScope.authenticationError = false;

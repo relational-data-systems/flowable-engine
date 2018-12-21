@@ -10,7 +10,17 @@
 			</button>
 		</div>
 		<div class="btn-group pull-right">
-	        <button type="button" class="btn btn-default" ng-click="deploy()" title="{{'PROCESS.ACTION.DEPLOY' | translate}}">
+			<button type="button" class="btn btn-default" ng-click="doAction('activate')" title="{{'PROCESS.ACTION.ACTIVATE' | translate}}">
+				Activate
+			</button>
+		</div>
+		<div class="btn-group pull-right">
+			<button type="button" class="btn btn-default" ng-click="doAction('suspend')" title="{{'PROCESS.ACTION.SUSPEND' | translate}}">
+				Suspend
+			</button>
+		</div>
+		<div class="btn-group pull-right">
+	        <button type="button" class="btn btn-default" ng-click="doAction('deploy')" title="{{'PROCESS.ACTION.DEPLOY' | translate}}">
 	            Deploy
 	        </button>
 		</div>
